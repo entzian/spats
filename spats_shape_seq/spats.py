@@ -176,15 +176,15 @@ import os
 import time
 import re
 
-from db import PairDB
-from mask import Mask, PLUS_PLACEHOLDER, MINUS_PLACEHOLDER
-from pair import Pair
-from parse import fasta_parse, FastFastqParser
-from profiles import Profiles
-from run import Run
-from target import Targets
-from util import _debug, _set_debug, _warn
-from worker import SpatsWorker
+from spats_shape_seq.db import PairDB
+from spats_shape_seq.mask import Mask, PLUS_PLACEHOLDER, MINUS_PLACEHOLDER
+from spats_shape_seq.pair import Pair
+from spats_shape_seq.parse import fasta_parse, FastFastqParser
+from spats_shape_seq.profiles import Profiles
+from spats_shape_seq.run import Run
+from spats_shape_seq.target import Targets
+from spats_shape_seq.util import _debug, _set_debug, _warn
+from spats_shape_seq.worker import SpatsWorker
 
 
 class Spats(object):
@@ -535,7 +535,7 @@ class Spats(object):
 
         match_count = 0
         total = 0
-        for key, value in our_counts.iteritems():
+        for key, value in iter(our_counts.items()):
             total += 1
             if their_counts.get(key, 0) == value:
                 match_count += 1

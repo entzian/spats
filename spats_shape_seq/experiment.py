@@ -146,12 +146,15 @@ class Experiment(object):
         self.r1Length = 32
         self.r2Length = 36
         ...
+        print("What is ...?")
 
     def descriptor(self):
         # core idea: here's where we build our data-driven description
         # of what fragments in this experiment look like
         maxLen = len(target)
-        if self.cotrans: etc...
+        if self.cotrans:
+            #etc...
+            print("What is etc...?")
         fd = FragmentDescriptor(self.pairLength, maxLen)
         if self.use_dumbbell:
             fd.addMatcher(SectionMatcher(self.dumbbell, True, SectionMatcher.MATCH_EXACT))

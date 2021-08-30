@@ -1,7 +1,7 @@
 
-from counters import Counters
-from mask import match_mask_optimized
-from util import _warn, _debug, reverse_complement, string_match_errors
+from spats_shape_seq.counters import Counters
+from spats_shape_seq.mask import match_mask_optimized
+from spats_shape_seq.util import _warn, _debug, reverse_complement, string_match_errors
 
 class Failures(object):
     mask = "mask failure"

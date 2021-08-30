@@ -153,7 +153,7 @@ class ReadsAnalyzer(object):
             p.addTagTarget("linker_cotrans_rc", reverse_complement(s.run.cotrans_linker))
         for tag in self._extra_tag_targets:
             p.addTagTarget(tag[0], tag[1])
-        for tag, handler in self._plugins.iteritems():
+        for tag, handler in iter(self._plugins.items()):
             p.addTagPlugin(tag, handler)
 
         s.process_pair_db(pair_db, batch_size = 10000)

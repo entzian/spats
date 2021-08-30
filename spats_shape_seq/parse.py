@@ -5,7 +5,7 @@ import struct
 from sys import version_info
 
 import spats_shape_seq
-from mask import match_mask_optimized, Mask
+from spats_shape_seq.mask import match_mask_optimized, Mask
 
 
 # not currently used in spats, but potentially useful for tools
@@ -55,8 +55,8 @@ class FastFastqParser(object):
         self.parse_quality = parse_quality
 
     def pair_length(self):
-        with open(self.r1_path, 'rb') as r1_in:
-            with open(self.r2_path, 'rb') as r2_in:
+        with open(self.r1_path, 'rt') as r1_in:
+            with open(self.r2_path, 'rt') as r2_in:
                 r1_in.readline()
                 r1_first = r1_in.readline().strip('\r\n')
                 r2_in.readline()
@@ -68,14 +68,14 @@ class FastFastqParser(object):
                 return pair_length
 
     def appx_number_of_pairs(self):
-        with open(self.r1_path, 'rb') as r1_in:
+        with open(self.r1_path, 'rt') as r1_in:
             # the +1 is since first records tend to be short, and we'd rather underestimate than overestimate
             frag_len = 1 + len(r1_in.readline()) + len(r1_in.readline()) + len(r1_in.readline()) + len(r1_in.readline())
         return int(float(os.path.getsize(self.r1_path)) / float(frag_len))
 
     def __enter__(self):
-        self.r1_in = open(self.r1_path, 'rb')
-        self.r2_in = open(self.r2_path, 'rb')
+        self.r1_in = open(self.r1_path, 'rt')
+        self.r2_in = open(self.r2_path, 'rt')
         self.r1_iter = iter(self.r1_in)
         self.r2_iter = iter(self.r2_in)
         return self
@@ -105,14 +105,14 @@ class FastFastqParser(object):
         include_quality = self.parse_quality
         try:
             while count < batch_size:
-                R1_id = r1_iter.next() #.split(' ')[0]
-                R1_seq = r1_iter.next().rstrip('\n\r')
-                r1_iter.next()
-                R1_q = r1_iter.next()
-                R2_id = r2_iter.next() #.split(' ')[0]
-                R2_seq = r2_iter.next().rstrip('\n\r')
-                r2_iter.next()
-                R2_q = r2_iter.next()
+                R1_id = next(r1_iter) #.split(' ')[0]
+                R1_seq = next(r1_iter).rstrip('\n\r')
+                next(r1_iter)
+                R1_q = next(r1_iter)
+                R2_id = next(r2_iter) #.split(' ')[0]
+                R2_seq = next(r2_iter).rstrip('\n\r')
+                next(r2_iter)
+                R2_q = next(r2_iter)
                 if 0 == count:
                     # good enough to just spot-check this, and improve parsing speed by skipping most of the time
                     R1_id = R1_id.split(' ')[0]
@@ -136,14 +136,14 @@ class FastFastqParser(object):
         r2_iter = self.r2_iter
         try:
             while count < max_num_pairs:
-                R1_id = r1_iter.next().split(' ')[0]
-                R1_seq = r1_iter.next().rstrip('\n\r')
-                r1_iter.next()
-                r1_iter.next()
-                R2_id = r2_iter.next().split(' ')[0]
-                R2_seq = r2_iter.next().rstrip('\n\r')
-                r2_iter.next()
-                r2_iter.next()
+                R1_id = next(r1_iter).split(' ')[0]
+                R1_seq = next(r1_iter).rstrip('\n\r')
+                next(r1_iter)
+                next(r1_iter)
+                R2_id = next(r2_iter).split(' ')[0]
+                R2_seq = next(r2_iter).rstrip('\n\r')
+                next(r2_iter)
+                next(r2_iter)
                 if R1_id != R2_id:
                     raise Exception("Malformed input files, id mismatch: {} != {}".format(R1_id, R2_id))
                 pairs.append((R1_id.lstrip('@'), R1_seq, R2_seq))
@@ -161,14 +161,14 @@ class FastFastqParser(object):
         r2_iter = self.r2_iter
         try:
             while count < max_num_pairs:
-                R1_numeric_id = int(r1_iter.next().strip('@\n\r'))
-                R1_seq = r1_iter.next().rstrip('\n\r')
-                R1_original_id = r1_iter.next().strip('+\n\r')
-                r1_iter.next()
-                R2_numeric_id = int(r2_iter.next().strip('@\n\r'))
-                R2_seq = r2_iter.next().rstrip('\n\r')
-                R2_original_id = r2_iter.next().strip('+\n\r')
-                r2_iter.next()
+                R1_numeric_id = int(next(r1_iter).strip('@\n\r'))
+                R1_seq = next(r1_iter).rstrip('\n\r')
+                R1_original_id = next(r1_iter).strip('+\n\r')
+                next(r1_iter)
+                R2_numeric_id = int(next(r2_iter).strip('@\n\r'))
+                R2_seq = next(r2_iter).rstrip('\n\r')
+                R2_original_id = next(r2_iter).strip('+\n\r')
+                next(r2_iter)
                 if R1_numeric_id != R2_numeric_id or R1_original_id != R2_original_id:
                     raise Exception("Malformed NOMASK files, id mismatch: ({},{}) != ({},{})".format(R1_numeric_id, R1_original_id, R2_numeric_id, R2_original_id))
                 pairs.append((R1_numeric_id, R1_seq, R2_seq, R1_original_id))
@@ -263,7 +263,7 @@ def fastq_handle_filter(r1_path, r2_path, masks = [ 'RRRY', 'YYYR' ], strip_mask
 
 def fasta_parse(target_path):
     pairs = []
-    with open(target_path, 'rb') as infile:
+    with open(target_path, 'rt') as infile:
         def nextline():
             while True:
                 l = infile.readline()
@@ -376,7 +376,7 @@ class SamParser(object):
         self.target_map = target_map
 
     def __enter__(self):
-        self.sam_in = open(self.sam_path, 'rb')
+        self.sam_in = open(self.sam_path, 'rt')
         self.sam_iter = iter(self.sam_in)
         return self
 
@@ -395,7 +395,7 @@ class SamParser(object):
 
         def nextline():
             while True:
-                l = sam_iter.next()
+                l = next(sam_iter)
                 if not l.startswith('@'):
                     return l
 
@@ -427,7 +427,7 @@ class SamParser(object):
 # all strings
 def reactivities_parse(path):
     sites = []
-    with open(path, 'rb') as infile:
+    with open(path, 'rt') as infile:
         infile.readline() # ignore header line
         while True:
             line = infile.readline()
@@ -488,7 +488,7 @@ class _Trace(object):
 
     def __init__(self, in_file, fields):
         self._fields = fields
-        self._handle = open(in_file, 'rb')
+        self._handle = open(in_file, 'rt')
         try:
             self._handle.seek(0)
             if not self._handle.read(4) == py3_get_byte('ABIF'):

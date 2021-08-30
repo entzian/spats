@@ -2,11 +2,11 @@
 import ast
 import sys
 
-from partial import PartialFindProcessor
-from lookup import LookupProcessor, CotransLookupProcessor
-from native import CotransNativeProcessor
-from tag import TagProcessor
-from util import _warn
+from spats_shape_seq.partial import PartialFindProcessor
+from spats_shape_seq.lookup import LookupProcessor, CotransLookupProcessor
+from spats_shape_seq.native import CotransNativeProcessor
+from spats_shape_seq.tag import TagProcessor
+from spats_shape_seq.util import _warn
 
 
 class Run(object):

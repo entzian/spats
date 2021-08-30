@@ -1,12 +1,13 @@
 
 import multiprocessing
-import Queue
+import queue
+from queue import Queue
 import sys
 
-from pair import Pair
-from parse import FastqWriter, SamWriter
-from util import _debug, _warn
-from mask import PLUS_PLACEHOLDER, MINUS_PLACEHOLDER
+from spats_shape_seq.pair import Pair
+from spats_shape_seq.parse import FastqWriter, SamWriter
+from spats_shape_seq.util import _debug, _warn
+from spats_shape_seq.mask import PLUS_PLACEHOLDER, MINUS_PLACEHOLDER
 
 
 class SpatsWorker(object):
@@ -77,7 +78,7 @@ class SpatsWorker(object):
             raise
 
     def _createWorkers(self, num_workers):
-        for i in xrange(num_workers):
+        for i in range(num_workers):
             worker = multiprocessing.Process(target = self._worker, args = (i,))
             self._workers.append(worker)
             worker.start()
@@ -129,7 +130,7 @@ class SpatsWorker(object):
                     if not quiet:
                         sys.stdout.write('v')
                         sys.stdout.flush()
-            except Queue.Empty:
+            except queue.Empty:
                 pass
             if all_results:
                 pair_db.add_results(self._result_set_id, all_results)
@@ -146,7 +147,7 @@ class SpatsWorker(object):
                     num_batches -= write_results()
             except StopIteration:
                 more_pairs = False
-            except Queue.Empty:
+            except queue.Empty:
                 pass
 
         if writeback:
@@ -154,7 +155,7 @@ class SpatsWorker(object):
                 num_batches -= write_results()
 
         # put signal objects to indicate we're done
-        for i in xrange(num_workers):
+        for i in range(num_workers):
             self._pairs_to_do.put(None)
 
         processor = self._processor
@@ -171,7 +172,7 @@ class SpatsWorker(object):
                     if not quiet:
                         sys.stdout.write('x')
                         sys.stdout.flush()
-            except Queue.Empty:
+            except queue.Empty:
                 pass
             return num_accumulated
 

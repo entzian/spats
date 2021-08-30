@@ -1,8 +1,8 @@
 
-from processor import PairProcessor, Failures
-from mask import base_similarity_ind
-from pair import Pair
-from util import _warn, _debug, reverse_complement, string_match_errors, string_find_errors, string_find_with_overlap, AlignmentParams
+from spats_shape_seq.processor import PairProcessor, Failures
+from spats_shape_seq.mask import base_similarity_ind
+from spats_shape_seq.pair import Pair
+from spats_shape_seq.util import _warn, _debug, reverse_complement, string_match_errors, string_find_errors, string_find_with_overlap, AlignmentParams
 
 
 class PartialFindProcessor(PairProcessor):

@@ -1,6 +1,6 @@
 
 import ast
-import ConfigParser
+from configparser import ConfigParser, SafeConfigParser
 import csv
 import datetime
 import json
@@ -18,9 +18,9 @@ import spats_shape_seq
 from spats_shape_seq import Spats
 from spats_shape_seq.parse import abif_parse, fastq_handle_filter, FastFastqParser
 from spats_shape_seq.reads import ReadsData, ReadsAnalyzer
-from counters import Counters
-from util import objdict_to_dict
-from mask import PLUS_PLACEHOLDER, MINUS_PLACEHOLDER
+from spats_shape_seq.counters import Counters
+from spats_shape_seq.util import objdict_to_dict
+from spats_shape_seq.mask import PLUS_PLACEHOLDER, MINUS_PLACEHOLDER
 
 
 class SpatsTool(object):
@@ -45,7 +45,7 @@ class SpatsTool(object):
         config_path = os.path.join(self.path, "spats.config")
         if not os.path.exists(config_path):
             return
-        parser = ConfigParser.SafeConfigParser()
+        parser = SafeConfigParser()
         parser.read(config_path)
         config = {}
         for section in parser.sections():
@@ -164,7 +164,7 @@ class SpatsTool(object):
         try:
             hdlr()
             failure = False
-        except Exception, e:
+        except Exception as e:
             print("** Command {} failed. ({})".format(command, e))
             failure = True
             #raise
@@ -184,7 +184,7 @@ class SpatsTool(object):
 
     def _log(self, command, delta):
         stamp = datetime.datetime.now().strftime('%Y/%m/%d %H:%M')
-        with open(os.path.join(self.path, 'spats.log'), 'ab') as outfile:
+        with open(os.path.join(self.path, 'spats.log'), 'at') as outfile:
             outfile.write("{} : {}, {:.2f}s\n".format(stamp, command, delta))
             for note in self._notes:
                 outfile.write("   - {}\n".format(note))
@@ -196,7 +196,7 @@ class SpatsTool(object):
         self._skip_log = True
         config_path = os.path.join(self.path, "spats.config")
         if not os.path.exists(config_path):
-            open(config_path, 'wb').write(_spats_config_template)
+            open(config_path, 'wt').write(_spats_config_template)
             self._add_note("Created default spats.config, please edit before running tools.")
         else:
             self._add_note("** spats.config already exists, not overwriting!")
@@ -325,7 +325,7 @@ class SpatsTool(object):
                 self._add_note("** removing previous preseq file")
                 os.remove(pre_name)
             preseq_data = abif_parse(filename, fields = [ 'DATA2', 'DATA3', 'DATA105' ])
-            open(pre_name, 'wb').write(json.dumps(preseq_data))
+            open(pre_name, 'wt').write(json.dumps(preseq_data))
             self._add_note("pre-sequencing data processed to {}".format(os.path.basename(pre_name)))
             nb = self._notebook()
             if nb:
@@ -389,7 +389,7 @@ class SpatsTool(object):
     def _update_run_config(self, run, dictionary = None):
         custom_config = False
         sentinel = '_-=*< sEnTiNeL >*-=_'
-        for key, value in self.config.iteritems():
+        for key, value in iter(self.config.items()):
             if key in [ "r1", "r2", "r1_plus", "r2_plus", "r1_minus", "r2_minus", "preseq", "target", "cotrans" ]:
                 continue
             if sentinel != getattr(run, key, sentinel):
@@ -455,13 +455,13 @@ class SpatsTool(object):
         jup_conf_path = os.path.expanduser('~/.jupyter/jupyter_notebook_config.py')
         jup_conf_line = "c.NotebookApp.browser = u'open %s'\n"
         if os.path.exists(jup_conf_path):
-            jup_conf = open(jup_conf_path, 'rb').read()
+            jup_conf = open(jup_conf_path, 'rt').read()
             if 'c.NotebookApp.browser' in jup_conf:
                 return
             jup_conf += "\n" + jup_conf_line
         else:
             jup_conf = jup_conf_line
-        open(jup_conf_path, 'wb').write(jup_conf)
+        open(jup_conf_path, 'wt').write(jup_conf)
 
     def _install_matplotlib_styles(self):
         import matplotlib as mpl
@@ -646,7 +646,7 @@ class SpatsTool(object):
             for key in profiles.cotrans_keys():
                 end = int(key.split('_')[-1])
                 prof = profiles.profilesForTargetAndEnd(tgt.name, end)
-                for i in xrange(end + 1):
+                for i in range(end + 1):
                     if 0 == prof.treated[i] and 0 == prof.untreated[i]:
                         sites_missing_reads.append( (tgt, end, i) )
                     datapt = [ end, i, tseq[i - 1] if i else '*', prof.treated[i], prof.untreated[i] ]
@@ -692,7 +692,7 @@ class SpatsTool(object):
                 end = len(tgt.seq)
                 prof = profiles.profilesForTarget(tgt)
                 data = []
-                for i in xrange(end + 1):
+                for i in range(end + 1):
                     if 0 == prof.treated[i] and 0 == prof.untreated[i]:
                         sites_missing_reads.append( (tgt, end, i) )
                     datapt = [ end, i, tseq[i - 1] if i else '*', prof.treated[i], prof.untreated[i] ]
@@ -729,7 +729,7 @@ class SpatsTool(object):
 
 
     def _write_csv(self, output_path, headers, data, delimiter=','):
-        with open(output_path, 'wb') as out_file:
+        with open(output_path, 'wt') as out_file:
             writer = csv.writer(out_file, delimiter = delimiter)
             if headers:
                 writer.writerow(headers)
@@ -762,7 +762,7 @@ class SpatsTool(object):
                 cval = prof.c_thresh
                 seq = "{}_{}nt".format(tgt.name, end)
                 data = []
-                for i in xrange(end + 1):
+                for i in range(end + 1):
                     datapt = [ seq, rt_start, i, tseq[i - 1] if i else '*', prof.treated[i], prof.untreated[i] ]
                     if not i:
                         datapt += [ '-', '-', cval ]
@@ -800,7 +800,7 @@ class SpatsTool(object):
                 prof = profiles.profilesForTarget(tgt)
                 data = []
                 rt_start = end - 1
-                for i in xrange(end):
+                for i in range(end):
                     datapt = [ tgt.name, rt_start, i, tseq[i - 1] if i else '*', prof.treated[i], prof.untreated[i] ]
                     if not i:
                         datapt += [ '-', '-', prof.c ]
@@ -1041,7 +1041,7 @@ class SpatsTool(object):
                     raise Exception('Invalid run_opt: {}'.format(key))
                 setattr(spats.run, key, value)
 
-            for name, seq in test_case.targets.iteritems():
+            for name, seq in iter(test_case.targets.items()):
                 spats.addTarget(name, seq)
 
             pair = test_case.pair()
@@ -1091,7 +1091,7 @@ class SpatsTool(object):
                             elif pair.r2.indels:
                                 raise Exception("unexpected R2 indels:  pair.r2.indels={}".format(r2inds))
                         if 'counters' in expects:
-                            for counter, value in expects['counters'].iteritems():
+                            for counter, value in iter(expects['counters'].items()):
                                 if getattr(spats.counters, str(counter)) != value:
                                     raise Exception("counter '{}' value off: expected={} != got={}".format(counter, value, getattr(spats.counters, counter)))
                         if 'pair.target' in expects:
